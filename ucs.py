@@ -1,54 +1,74 @@
-def get_legal_moves(blank_index):
 
+from collections import deque, defaultdict
+
+move_costs = {"UP": 5, "DOWN": 1, "LEFT": 1, "RIGHT": 1}
+def get_legal_moves(board):
+    legal_moves = []
+    blank_index = board.index("#")
     row = blank_index // 3 + 1
     col = blank_index % 3 + 1
 
-    legal_moves = []
-
-    if (row > 1): legal_moves.append("up")
-    if (row < 3): legal_moves.append("down")
-    if (col < 3): legal_moves.append("right")
-    if (col > 1): legal_moves.append("left")
+    if row > 1: legal_moves.append("up")
+    if row < 3: legal_moves.append("down")
+    if col > 1: legal_moves.append("left")
+    if col < 3: legal_moves.append("right")
 
     return legal_moves
 
-def make_move(board_str, direction, blank_index):
-    board_list = list(board_str)
-
-    match direction.lower():
-        case "up": 
-            board_list[blank_index] = board_list[blank_index - 3]
-            board_list[blank_index - 3] = "#"
-        case "down": 
-            board_list[blank_index] = board_list[blank_index + 3]
-            board_list[blank_index + 3] = "#"
-        case "right": 
-            board_list[blank_index] = board_list[blank_index + 1]
-            board_list[blank_index + 1] = "#"
-        case "left": 
-            board_list[blank_index] = board_list[blank_index - 1]
-            board_list[blank_index - 1] = "#"
+def make_move(boardStr, move):
+    board = list(boardStr)
+    blank_index = board.index("#")
     
-    return "".join(board_list)
-
-def uniform_cost_search() {
-    initial_state = input().strip()
-    goal_state = input().strip()
-
-    # assign initial state into the priority queue with cost
-
-    # While prio
-    if (initial_state = goal_state):
-        # append cost
+    match move:
+        case "up":
+            board[blank_index] = board[board_index - 3]
+            board[blank_index - 3] = "#"
+        case "down":
+            board[blank_index] = board[board_index + 3]
+            board[blank_index + 3] = "#"
+        case "right":
+            board[blank_index] = board[board_index + 1]
+            board[blank_index + 1] = "#"
+        case "left":
+            board[blank_index] = board[board_index - 1]
+            board[blank_index - 1] = "#"
     
-    visited = set()
-    visited.add(current_state)
+    return "".join(board)
 
-    blank_index = initial_state.index("#")
-    legal_moves = get_legal_moves(blank_index)
 
-    for move in legal_moves:
-        next_move = make_move(current_state, move, blank_index)
 
-        # check if 
-}
+def ucs_shortest_path(initial, goal):
+    # Part 1
+    frontier = defaultdict(list)
+    frontier[0].append(initial)
+    visited = {initial: 0}
+    current_min_cost = 0
+
+    # Part 2
+    while frontier:
+        while current_min_cost not in frontier:
+            current_min_cost += 1
+
+        current_state = frontier[current_min_cost].pop()
+        if not frontier[current_min_cost]:
+            del frontier[current_min_cost]
+
+        if current_state == goal:
+            return current_min_cost
+
+        # Part 3
+        legal_moves = get_legal_moves(current_state)
+
+        for move in legal_moves:
+            next_board = make_move(current_state, move)
+            new_cost = current_min_cost + move_costs[move]
+
+            if next_board not in visited or new_cost < visited[next_board]:
+                visited[next_board] = new_cost
+                frontier[new_cost].append(next_board)
+
+    return -1
+
+initial = input().strip()
+goal = input().strip()
+print(ucs_shortest_path(initial, goal))
