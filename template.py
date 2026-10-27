@@ -46,19 +46,6 @@ def make_move(boardStr, move):
             board[blank_index - 1] = "#"
 
 
-def manhattan(board, goal):
-    total = 0
-    for position in range(9):
-        tile = board[position]
-        if tile == "#":
-            continue
-        goal_position = goal.index(tile)
-        row_distance = abs(position // 3 - goal_position // 3)
-        col_distance = abs(position % 3 - goal_position % 3)
-        total += row_distance + col_distance
-    return total
-
-
 # ---------- Lab 1, Submission 3: BFS ----------
 
 def bfs(initial, goal):
@@ -72,7 +59,6 @@ def bfs(initial, goal):
             return cost
 
         legal_moves = get_legal_moves(current)
-
         for move in legal_moves:
             next_board = make_move(current, move)
 
@@ -93,7 +79,7 @@ def ucs_shortest_path(initial, goal):
     current_min_cost = 0
 
     while frontier:
-        if current_min_cost not in frontier:
+        while current_min_cost not in frontier:
             current_min_cost += 1
         
         current_board = frontier[current_min_cost].pop()
@@ -107,65 +93,92 @@ def ucs_shortest_path(initial, goal):
         for move in legal_moves:
             next_board = make_move(current_board, move)
             new_cost = current_min_cost + move_costs[move]
+
+            if next_board not in visited or new_cost < visited[next_board]:
+                visited[next_board] = new_cost
+                frontier[new_cost].append(next_board)
+
+    return -1
     
 
 
-# ---------- Lab 2, Submission 2: Greedy (priority = guess only) ----------
+# ---------- Lab 2, Submission 2: Greedy ----------
 
-def greedy(start, goal):
-    buckets = defaultdict(list)
-    buckets[manhattan(start, goal)].append((start, 0))
+def get_manhattan_distance(board, goal):
+    total = 0
+    for position in range(9):
+        tile = board[position]
+        if tile == "#":
+            continue
+
+        goal_position = goal.index(tile)
+        row_distance = abs(position // 3 - goal_position // 3)
+        col_distance = abs(position % 3 - goal_position % 3)
+        total += row_distance + col_distance
+
+    return total
+
+def greedy_best_first_search(initial, goal):
+    frontier = defaultdict(list)
+    frontier[manhattan_distance(initial, goal)].append((initial, 0))
     visited = set()
 
-    while buckets:
-        smallest = min(buckets)
-        item = min(buckets[smallest])          # ties: alphabetically smallest board
-        buckets[smallest].remove(item)
-        if not buckets[smallest]:
-            del buckets[smallest]
-        board, cost = item
+    while frontier:
+        smallest_heuristic = min(frontier)
+        current_board, cost = min(frontier[smallest_heuristic])
+        frontier[smallest_heuristic].remove((current_board, cost))
+        
+        if not frontier[smallest_heuristic]:
+            del frontier[smallest_heuristic]
 
-        if board in visited:
+        if current_board in visited:
             continue
-        visited.add(board)
+        visited.add(current_board)
 
-        if board == goal:
+        if current_board == goal:
             return cost
 
-        for a in actions(board):
-            next_board = move(board, a)
+        legal_moves = get_legal_moves(current_board)
+        for move in legal_moves:
+            next_board = make_move(current_board, move)
             if next_board not in visited:
-                guess = manhattan(next_board, goal)
-                buckets[guess].append((next_board, cost + 1))
+                heuristic = manhattan_distance(next_board, goal)
+                frontier[heuristic].append((next_board, cost + 1))
 
+    return -1
 
 # ---------- Lab 2, Submission 3: A* (priority = cost so far + guess) ----------
 
-def astar(start, goal):
-    buckets = defaultdict(deque)
-    buckets[manhattan(start, goal)].append((start, 0))
+def a_star_search(initial, goal):
+    frontier = defaultdict(list)
+    frontier[manhattan_distance(initial, goal)].append((initial, 0))
     visited = set()
+    current_min_priority = 0
 
-    while buckets:
-        smallest = min(buckets)
-        board, cost = buckets[smallest].popleft()
-        if not buckets[smallest]:
-            del buckets[smallest]
+    while frontier:
+        while current_min_priority not in frontier:
+            current_min_priority += 1
 
-        if board in visited:
+        current_board, cost = frontier[current_min_priority].pop()
+        if not frontier[current_min_priority]:
+            del frontier[current_min_priority]
+
+        if current_board in visited:
             continue
-        visited.add(board)
+        visited.add(current_board)
 
-        if board == goal:
+        if current_board == goal:
             return cost
 
-        for a in actions(board):
-            next_board = move(board, a)
+        legal_moves = get_legal_moves(current_board)
+        for move in legal_moves:
+            next_board = make_move(current_board, move)
             if next_board not in visited:
                 new_cost = cost + 1
-                priority = new_cost + manhattan(next_board, goal)
-                buckets[priority].append((next_board, new_cost))
+                priority = new_cost + manhattan_distance(next_board, goal)
+                frontier[priority].append((next_board, new_cost))
 
+    return -1
 
 # ---------- Main: uncomment the ONE block the question asks for ----------
 
